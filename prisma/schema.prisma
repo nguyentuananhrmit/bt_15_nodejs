@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/common/commonPrisma/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model images {
+  id          Int         @id @default(autoincrement())
+  user_id     Int
+  title       String      @db.VarChar(255)
+  description String?     @db.Text
+  image_url   String      @db.Text
+  is_active   Boolean?    @default(true)
+  created_at  DateTime?   @default(now()) @db.Timestamp(0)
+  updated_at  DateTime?   @default(now()) @db.Timestamp(0)
+  comments    comments[]
+  users       users       @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_images_user")
+  wishlists   wishlists[]
+
+  @@index([user_id], map: "fk_images_user")
+}
+
+model users {
+  id         Int         @id @default(autoincrement())
+  full_name  String      @db.VarChar(255)
+  email      String      @unique(map: "email") @db.VarChar(255)
+  password   String      @db.VarChar(255)
+  is_active  Boolean?    @default(true)
+  created_at DateTime?   @default(now()) @db.Timestamp(0)
+  updated_at DateTime?   @default(now()) @db.Timestamp(0)
+  comments   comments[]
+  images     images[]
+  wishlists  wishlists[]
+}
+
+model wishlists {
+  id         Int       @id @default(autoincrement())
+  user_id    Int
+  image_id   Int
+  created_at DateTime? @default(now()) @db.DateTime(0)
+  users      users     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "wishlists_ibfk_1")
+  images     images    @relation(fields: [image_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "wishlists_ibfk_2")
+
+  @@unique([user_id, image_id], map: "user_id")
+  @@index([image_id], map: "image_id")
+}
+
+model comments {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  image_id   Int
+  content    String   @db.Text
+  created_at DateTime @default(now()) @db.DateTime(0)
+  updated_at DateTime @default(now()) @db.DateTime(0)
+  images     images   @relation(fields: [image_id], references: [id], onDelete: Cascade, map: "fk_comments_image")
+  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "fk_comments_user")
+
+  @@index([image_id], map: "idx_comments_image_id")
+  @@index([user_id], map: "idx_comments_user_id")
+}
